@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link rel="stylesheet" href="./css/style.css" />
+        <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+        <script src="./js/main.js"></script>
+        <title>Fake Store</title>
+    </head>
+    <body>
+        <div id="app">
+            <header class="header">
+                <section class="logo">
+                    <img src="./img/logo.png" alt="Logo" />
+                    <h1>Fake Store</h1>
+                </section>
+                <section class="menu">
+                    <nav>
+                        <ul>
+                            <li><a @click="mostrarTodo">Todos los productos</a></li>
+                            <li v-for="categoria in categorias">
+                                <a @click="mostrarPorCategoria(categoria)"> {{ categoria}}</a>
+                            </li>
+                        </ul>
+                    </nav>
+                </section>
+                <section class="cart-login">
+                    <button class="btn">Iniciar Sesion</button>
+                    <button class="btn">Registrarse</button>
+                    <button class="btn">Cart {{ carrito.length}}</button>
+                </section>
+            </header>
+            <section class="filtrar">
+                <h3>Ordenar por:</h3>
+                <select @change="cambiarFiltro($event.target.value)">
+                    <option value="precio">precio</option>
+                    <option value="votos">votos</option>
+                    <option value="titulo">titulo</option>
+                </select>
+                <select @change="cambiarOrden($event.target.value)">
+                    <option value="ascendente">ascendente</option>
+                    <option value="descendente">descendente</option>
+                </select>
+            </section>
+            <main class="main">
+                <div v-for="producto in productos" v-bind:key="producto.id" class="producto">
+                    <img v-if="producto.image" :src="producto.image" />
+                    <h3 v-if="producto.title">{{ producto.title }}</h3>
+                    <p v-if="producto.category" class="categoria">Categoría: {{ producto.category }}</p>
+                    <p v-if="producto.price" class="precio">Precio: {{ producto.price }}</p>
+                    <p v-if="producto.rating" class="rating">Calificación: {{ producto.rating.rate }}</p>
+                    <button @click="agregarAlCarrito(producto)" class="btn">Añadir</button>
+                </div>
+            </main>
+            <footer class="footer">Pie de página</footer>
+            <section id="cart">
+                <h2>Carrito Total {{ total }}</h2>
+                <div v-for="(producto, index) in carrito" v-bind:key="producto.id" class="producto">
+                    <img v-if="producto.image" :src="producto.image" />
+                    <div>
+                        <h3 v-if="producto.title">{{ producto.title }}</h3>
+                        <p v-if="producto.price" class="precio">Precio: {{ producto.price }}</p>
+                        <p>Cantidad: {{ producto.quantity }}</p>
+                        <p>Total: {{ producto.total }}</p>
+                    </div>
+                    <div>
+                        <button @click="aumentarCantidad(index)" class="btn">+</button>
+                        <button @click="reducirCantidad(index)" class="btn">-</button>
+                        <button @click="eliminarDelCarrito(index)" class="btn">Eliminar</button>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </body>
+</html>
