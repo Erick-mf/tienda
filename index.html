@@ -26,9 +26,18 @@
                     </nav>
                 </section>
                 <section class="cart-login">
-                    <button class="btn">Iniciar Sesion</button>
-                    <button class="btn">Registrarse</button>
-                    <button class="btn">Cart {{ carrito.length}}</button>
+                    <div v-if="sesionActiva">
+                        <span>Bienvenido, {{ usuario }}</span>
+                        <button @click="cerrarSesion" class="btn">Cerrar Sesión</button>
+                    </div>
+                    <div v-else>
+                        <button @click="abrirModal('Iniciar Sesion')" class="btn">Iniciar Sesion</button>
+                        <button @click="abrirModal('Registrarse')" class="btn">Registrarse</button>
+                    </div>
+                    <button @click="toggleCarrito" class="btn" v-if="carrito.length > 0">
+                        Carrito artículos: {{ cantidadArticulos }}
+                    </button>
+                    <button @click="toggleCarrito" class="btn" v-else>Carrito</button>
                 </section>
             </header>
             <section class="filtrar">
@@ -43,34 +52,87 @@
                     <option value="descendente">descendente</option>
                 </select>
             </section>
+
+            <transition name="fade">
+                <section id="cart" v-if="mostrarCarrito">
+                    <button @click="mostrarCarrito = false" class="btn-cerrar">X</button>
+                    <h2>Carrito Total {{ total.toFixed(2) }}</h2>
+                    <div v-for="(producto, index) in carrito" v-bind:key="producto.id" class="producto">
+                        <img v-if="producto.image" :src="producto.image" />
+                        <div>
+                            <h3 v-if="producto.title">{{ producto.title }}</h3>
+                            <p v-if="producto.price" class="precio"><b>Precio:</b> {{ producto.price.toFixed(2) }}</p>
+                            <p><b>Cantidad:</b> {{ producto.quantity }}</p>
+                            <p><b>Total:</b> {{ producto.total.toFixed(2) }}</p>
+                        </div>
+                        <div>
+                            <button @click="aumentarCantidad(index)" class="btn">+</button>
+                            <button @click="reducirCantidad(index)" class="btn">-</button>
+                            <button @click="eliminarDelCarrito(index)" class="btn">Eliminar</button>
+                        </div>
+                    </div>
+                    <button v-if="sesionActiva" @click="pagar" class="btn">Pagar</button>
+                </section>
+            </transition>
             <main class="main">
-                <div v-for="producto in productos" v-bind:key="producto.id" class="producto">
+                <div
+                    v-for="producto in productosMostrados"
+                    v-bind:key="producto.id"
+                    @click="productSeleccionado = producto"
+                    class="producto"
+                >
                     <img v-if="producto.image" :src="producto.image" />
                     <h3 v-if="producto.title">{{ producto.title }}</h3>
-                    <p v-if="producto.category" class="categoria">Categoría: {{ producto.category }}</p>
-                    <p v-if="producto.price" class="precio">Precio: {{ producto.price }}</p>
-                    <p v-if="producto.rating" class="rating">Calificación: {{ producto.rating.rate }}</p>
-                    <button @click="agregarAlCarrito(producto)" class="btn">Añadir</button>
+                    <p v-if="producto.category" class="categoria"><b>Categoría:</b> {{ producto.category }}</p>
+                    <p v-if="producto.price" class="precio"><b>Precio:</b> {{ producto.price }}</p>
+                    <p v-if="producto.rating" class="rating"><b>Calificación:</b> {{ producto.rating.rate }}</p>
+                    <button @click.stop="agregarAlCarrito(producto)" class="btn">Añadir</button>
+                </div>
+
+                <div v-if="productSeleccionado" class="modal" @click="productSeleccionado = null">
+                    <div class="modal-content producto" @click.stop>
+                        <img v-if="productSeleccionado.image" :src="productSeleccionado.image" />
+                        <h3 v-if="productSeleccionado.title">{{ productSeleccionado.title }}</h3>
+                        <p v-if="productSeleccionado.category" class="categoria">
+                            <b>Categoría:</b> {{ productSeleccionado.category }}
+                        </p>
+                        <p v-if="productSeleccionado.price" class="precio">
+                            <b>Precio:</b> {{ productSeleccionado.price }}
+                        </p>
+                        <p v-if="productSeleccionado.rating" class="rating">
+                            <b>Calificación:</b> {{ productSeleccionado.rating.rate }}
+                        </p>
+                        <p v-if="productSeleccionado.description">{{ productSeleccionado.description }}</p>
+                    </div>
+                </div>
+
+                <div v-if="mostrarModal" class="modal">
+                    <div class="modal-content">
+                        <button @click="mostrarModal = false" class="btn-cerrar">X</button>
+
+                        <form v-if="modalContent === 'Iniciar Sesion'" @submit.prevent="iniciarSesion">
+                            <label for="nombreusuario">Nombre de usuario:</label>
+                            <input type="text" id="nombreusuario" v-model="nombreusuario" />
+
+                            <label for="password">Contraseña:</label>
+                            <input type="password" id="password" v-model="password" />
+
+                            <button type="submit" class="btn">Iniciar Sesión</button>
+                        </form>
+
+                        <form v-if="modalContent === 'Registrarse'" @submit.prevent="registrarse">
+                            <label for="nuevo-usuario">Nombre de usuario:</label>
+                            <input type="text" id="nuevo-usuario" v-model="nombreusuario" />
+
+                            <label for="new-password">Contraseña:</label>
+                            <input type="password" id="new-password" v-model="password" />
+
+                            <button type="submit" class="btn">Registrarse</button>
+                        </form>
+                    </div>
                 </div>
             </main>
             <footer class="footer">Pie de página</footer>
-            <section id="cart">
-                <h2>Carrito Total {{ total }}</h2>
-                <div v-for="(producto, index) in carrito" v-bind:key="producto.id" class="producto">
-                    <img v-if="producto.image" :src="producto.image" />
-                    <div>
-                        <h3 v-if="producto.title">{{ producto.title }}</h3>
-                        <p v-if="producto.price" class="precio">Precio: {{ producto.price }}</p>
-                        <p>Cantidad: {{ producto.quantity }}</p>
-                        <p>Total: {{ producto.total }}</p>
-                    </div>
-                    <div>
-                        <button @click="aumentarCantidad(index)" class="btn">+</button>
-                        <button @click="reducirCantidad(index)" class="btn">-</button>
-                        <button @click="eliminarDelCarrito(index)" class="btn">Eliminar</button>
-                    </div>
-                </div>
-            </section>
         </div>
     </body>
 </html>

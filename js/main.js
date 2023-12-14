@@ -8,8 +8,16 @@ window.onload = () => {
                 carrito: [],
                 productos: [],
                 filtro: "precio",
-                order: "ascendente",
-                total: 0,
+                orden: "ascendente",
+                mostrarCarrito: false,
+                productSeleccionado: null,
+                nombreusuario: "",
+                password: "",
+                usuarios: JSON.parse(localStorage.getItem("usuarios")) || [],
+                mostrarModal: false,
+                modalContent: "",
+                sesionActiva: false,
+                usuario: null,
             };
         },
         methods: {
@@ -36,11 +44,9 @@ window.onload = () => {
             },
             cambiarFiltro(filtro) {
                 this.filtro = filtro;
-                this.mostrarTodo();
             },
             cambiarOrden(orden) {
                 this.orden = orden;
-                this.mostrarTodo();
             },
             ordenarProductos(productos) {
                 return productos.sort((a, b) => {
@@ -67,28 +73,78 @@ window.onload = () => {
                         total: producto.price,
                     });
                 }
-                this.total += producto.price;
             },
             eliminarDelCarrito(index) {
-                let item = this.carrito[index];
-                this.total -= item.total;
                 this.carrito.splice(index, 1);
             },
             aumentarCantidad(index) {
                 let item = this.carrito[index];
                 item.quantity++;
                 item.total = item.price * item.quantity;
-                this.total += item.price;
             },
             reducirCantidad(index) {
                 let item = this.carrito[index];
                 if (item.quantity > 1) {
                     item.quantity--;
                     item.total = item.price * item.quantity;
-                    this.total -= item.price;
                 } else {
                     this.eliminarDelCarrito(index);
                 }
+            },
+            pagar() {
+                if (this.carrito.length > 0) {
+                    alert("Pago realizado con éxito!");
+                    this.carrito = [];
+                } else {
+                    alert("Tu carrito está vacío");
+                }
+            },
+            toggleCarrito() {
+                this.mostrarCarrito = !this.mostrarCarrito;
+            },
+            abrirModal(content) {
+                this.mostrarModal = true;
+                this.modalContent = content;
+            },
+            iniciarSesion() {
+                const usuario = this.usuarios.find((usuario) => usuario.nombreusuario === this.nombreusuario);
+                if (usuario && usuario.password === this.password) {
+                    alert("Inicio de sesión exitoso!");
+                    this.usuario = this.nombreusuario;
+                    this.sesionActiva = true;
+                    this.mostrarModal = false;
+                    this.nombreusuario = "";
+                    this.password = "";
+                } else {
+                    alert("Nombre de usuario o contraseña incorrectos");
+                }
+            },
+            cerrarSesion() {
+                this.usuario = null;
+                this.sesionActiva = false;
+            },
+            registrarse() {
+                if (this.usuarios.some((usuario) => usuario.nombreusuario === this.nombreusuario)) {
+                    alert("El nombre de usuario ya está en uso");
+                } else {
+                    this.usuarios.push({ nombreusuario: this.nombreusuario, password: this.password });
+                    localStorage.setItem("usuarios", JSON.stringify(this.usuarios));
+                    alert("Registro exitoso!");
+                    this.mostrarModal = false;
+                    this.nombreusuario = "";
+                    this.password = "";
+                }
+            },
+        },
+        computed: {
+            productosMostrados() {
+                return this.ordenarProductos([...this.productos]);
+            },
+            total() {
+                return this.carrito.reduce((total, producto) => total + producto.total, 0);
+            },
+            cantidadArticulos() {
+                return this.carrito.reduce((total, producto) => total + producto.quantity, 0);
             },
         },
         mounted() {
